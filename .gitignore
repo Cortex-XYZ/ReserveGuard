@@ -1,0 +1,15 @@
+# Foundry
+out/
+cache/
+broadcast/
+lib/
+
+# Environment
+.env
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.agent/
