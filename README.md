@@ -71,7 +71,7 @@ ReserveGuard preserves MIP-4 semantics and provides developer-friendly Solidity 
 
 Developer-facing examples live in `examples/`.
 
-Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated drain/restore experiment. See `docs/live-testnet.md` for the live Monad testnet workflow and caveats.
+Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated drain/restore experiment. See `docs/live-testnet.md` for the live Monad testnet workflow, authorization commands, verified observations, and caveats.
 
 ## Deploy to Monad Testnet
 
@@ -99,5 +99,7 @@ forge script script/DeployTestnetExperiments.s.sol:DeployTestnetExperiments \
   --private-key "$PRIVATE_KEY" \
   --broadcast
 ```
+
+For where to get each value, how to map Foundry's `Contract Address:` output to env vars, post-deploy smoke tests, drain/restore checks, and the EIP-7702 reserve-dip workflow, see `docs/live-testnet.md`.
 
 The EIP-7702 delegated drain/restore experiment is intentionally documented as a live testnet workflow because local Monad Foundry validates delegated routing but may not reproduce the same reserve-dip semantics observed on testnet.

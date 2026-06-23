@@ -164,10 +164,10 @@ This normal-contract experiment helps distinguish ordinary contract balance move
 
 ## 7702 Reserve-Dip Experiment
 
-The currently verified sufficient condition from external testnet research is:
+The currently verified sufficient condition is:
 
 ```text
-protocol-created EIP-7702 delegated EOA
+EIP-7702 delegated EOA
 + real Monad testnet authorization-list transaction
 + delegated account balance crosses from above 10 MON to below 10 MON during execution
 = dippedIntoReserve() observed true
@@ -178,6 +178,55 @@ Use `Testnet7702DelegatedDrainRestore` as the implementation attached to the del
 ```solidity
 drainRestore(TestnetRefundSink sink, uint256 amount)
 ```
+
+### 7702 Roles
+
+| Role | Meaning |
+| --- | --- |
+| `DELEGATED_IMPL` | Deployed `Testnet7702DelegatedDrainRestore` implementation contract. |
+| `DELEGATED_AUTHORITY` | EOA that signs the EIP-7702 authorization and temporarily runs `DELEGATED_IMPL` code. |
+| `DELEGATED_AUTHORITY_PRIVATE_KEY` | Private key for `DELEGATED_AUTHORITY`, used only to sign the authorization. |
+| `PRIVATE_KEY` | Sponsor/deployer private key that broadcasts the transaction and pays gas. |
+
+The delegated authority is not one of the deployed contracts. It is a normal EOA whose account is authorized to execute the deployed implementation code.
+
+Create or choose a testnet-only delegated authority wallet:
+
+```bash
+export DELEGATED_AUTHORITY_PRIVATE_KEY="0x..."
+export DELEGATED_AUTHORITY=$(cast wallet address --private-key "$DELEGATED_AUTHORITY_PRIVATE_KEY")
+```
+
+Fund the delegated authority above the reserve threshold:
+
+```bash
+cast send "$DELEGATED_AUTHORITY" \
+  --value 19ether \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$PRIVATE_KEY"
+
+cast balance "$DELEGATED_AUTHORITY" --ether --rpc-url "$MONAD_RPC_URL"
+```
+
+Sign the EIP-7702 authorization with the delegated authority key. The RPC URL is required so `cast` can resolve the correct chain and nonce context:
+
+```bash
+export AUTH=$(cast wallet sign-auth "$DELEGATED_IMPL" \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$DELEGATED_AUTHORITY_PRIVATE_KEY")
+```
+
+Submit the authorization-list transaction from the sponsor/deployer:
+
+```bash
+cast send "$DELEGATED_AUTHORITY" "drainRestore(address,uint256)" \
+  "$REFUND_SINK" 10ether \
+  --auth "$AUTH" \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$PRIVATE_KEY"
+```
+
+The resulting transaction should be type `4`. The logs should be emitted from `DELEGATED_AUTHORITY`, not `DELEGATED_IMPL`, because the implementation code runs in the delegated authority account context.
 
 The contract emits:
 
@@ -218,6 +267,67 @@ cast balance "$DELEGATED_AUTHORITY" --ether --rpc-url "$MONAD_RPC_URL"
 ```
 
 For the drain/restore shape, the delegated authority should start above `10 MON`, drain below `10 MON` during execution, and return above `10 MON` before completion.
+
+## Verified Live Testnet Observations
+
+The following observations have been reproduced with these contracts on Monad testnet.
+
+### Normal Contract Drain/Restore
+
+Transaction shape:
+
+```text
+TestnetDrainRestore balance: 19 MON -> 9 MON -> 19 MON
+```
+
+Observed reserve state:
+
+```text
+beforeDip = false
+duringDip = false
+afterDip = false
+```
+
+Deduction:
+
+```text
+An ordinary contract account temporarily crossing below 10 MON was not sufficient to make dippedIntoReserve() return true in this run.
+```
+
+### EIP-7702 Delegated EOA Drain/Restore
+
+Transaction:
+
+```text
+hash: 0xeed485392dfe48c55d7ac517599e3c5cb7fe448707fc755de58bc1f5d6e03ac8
+type: 4
+delegated authority: 0x188F267e6B31080b6DD087cFC8BA25310Bee2d72
+sponsor/caller: 0x5ee198D6C1b8a3a1D5a7aBDcd8c3d906f907B2DB
+```
+
+Observed balances:
+
+```text
+before balance = 19169866400000000000
+during balance = 9169866400000000000
+after balance = 19169866400000000000
+```
+
+Observed reserve state:
+
+```text
+beforeDip = false
+duringDip = true
+afterDip = false
+```
+
+Deduction:
+
+```text
+In a real EIP-7702 authorization-list transaction, a delegated EOA crossing below the reserve threshold during execution was observed by ReserveGuard through MIP-4.
+```
+
+This validates the primary ReserveGuard use case for explicit reserve checkpoints in delegated-account flows.
 
 ## Record Evidence
 
