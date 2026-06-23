@@ -67,6 +67,37 @@ function dippedIntoReserve() external returns (bool);
 
 ReserveGuard preserves MIP-4 semantics and provides developer-friendly Solidity wrappers. A healthy checkpoint does not guarantee the transaction will remain healthy later; it only validates reserve state at the point where the check runs.
 
-## Status
+## Examples
 
-Initial scaffold for V1: detect and fail earlier.
+Developer-facing examples live in `examples/`.
+
+Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated drain/restore experiment. See `docs/live-testnet.md` for the live Monad testnet workflow and caveats.
+
+## Deploy to Monad Testnet
+
+Set your environment variables in Bash:
+
+```bash
+export MONAD_RPC_URL="https://..."
+export PRIVATE_KEY="0x..."
+```
+
+Deploy the developer-facing examples:
+
+```bash
+forge script script/DeployExamples.s.sol:DeployExamples \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$PRIVATE_KEY" \
+  --broadcast
+```
+
+Deploy the live testnet experiment contracts:
+
+```bash
+forge script script/DeployTestnetExperiments.s.sol:DeployTestnetExperiments \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$PRIVATE_KEY" \
+  --broadcast
+```
+
+The EIP-7702 delegated drain/restore experiment is intentionally documented as a live testnet workflow because local Monad Foundry validates delegated routing but may not reproduce the same reserve-dip semantics observed on testnet.

@@ -26,3 +26,11 @@ function withdraw(uint256 amount) external reserveHealthy {
 
 Use `reserveProtected` when a function should start and end in healthy reserve state.
 This is stricter than a pre-check alone.
+
+## EIP-7702 Delegated Accounts
+
+Monad reserve-balance behavior is especially relevant when an EIP-7702 delegated EOA can move MON from its own account during execution.
+
+Use the contracts under `examples/testnet/` to run live testnet experiments that observe reserve state before, during, and after a delegated account drain/restore flow.
+
+Local Foundry tests validate the integration shape. Live Monad testnet transactions are the authority for reserve-state semantics.
