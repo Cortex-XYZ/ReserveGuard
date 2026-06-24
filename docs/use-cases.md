@@ -33,4 +33,10 @@ Monad reserve-balance behavior is especially relevant when an EIP-7702 delegated
 
 Use the contracts under `examples/testnet/` to run live testnet experiments that observe reserve state before, during, and after a delegated account drain/restore flow.
 
+After deploying the testnet experiment contracts, run the repeatable 7702 flow with:
+
+```bash
+bash scripts/run-7702-drain-restore.sh
+```
+
 Local Foundry tests validate the integration shape. Live Monad testnet transactions are the authority for reserve-state semantics.

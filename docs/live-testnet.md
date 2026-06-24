@@ -228,6 +228,25 @@ cast send "$DELEGATED_AUTHORITY" "drainRestore(address,uint256)" \
 
 The resulting transaction should be type `4`. The logs should be emitted from `DELEGATED_AUTHORITY`, not `DELEGATED_IMPL`, because the implementation code runs in the delegated authority account context.
 
+You can run the same flow with the helper script:
+
+```bash
+export DELEGATED_AUTHORITY_PRIVATE_KEY="0x..."
+export DELEGATED_IMPL="0x..."
+export REFUND_SINK="0x..."
+
+bash scripts/run-7702-drain-restore.sh
+```
+
+The script derives `DELEGATED_AUTHORITY` from `DELEGATED_AUTHORITY_PRIVATE_KEY`, signs the EIP-7702 authorization, sends the sponsored type-4 transaction, and prints the recorded balances and reserve states.
+
+Optional overrides:
+
+```bash
+export SPONSOR_PRIVATE_KEY="0x..." # defaults to PRIVATE_KEY
+export DRAIN_AMOUNT="10ether"      # defaults to 10ether
+```
+
 The contract emits:
 
 ```solidity

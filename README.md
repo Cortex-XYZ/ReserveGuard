@@ -102,4 +102,10 @@ forge script script/DeployTestnetExperiments.s.sol:DeployTestnetExperiments \
 
 For where to get each value, how to map Foundry's `Contract Address:` output to env vars, post-deploy smoke tests, drain/restore checks, and the EIP-7702 reserve-dip workflow, see `docs/live-testnet.md`.
 
+After deploying testnet experiments, the 7702 drain/restore flow can be repeated with:
+
+```bash
+bash scripts/run-7702-drain-restore.sh
+```
+
 The EIP-7702 delegated drain/restore experiment is intentionally documented as a live testnet workflow because local Monad Foundry validates delegated routing but may not reproduce the same reserve-dip semantics observed on testnet.
