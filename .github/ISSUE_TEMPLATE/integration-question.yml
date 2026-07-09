@@ -1,0 +1,25 @@
+name: Integration question
+description: Ask how to use ReserveGuard in a Monad contract or experiment.
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you building or testing?
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant code or pseudocode
+      render: solidity
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What decision are you trying to make?
+    validations:
+      required: true

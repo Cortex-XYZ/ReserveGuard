@@ -1,0 +1,45 @@
+name: Use case report
+description: Share a ReserveGuard integration or flow that may need reserve-aware checkpoints.
+title: "[Use case]: "
+labels:
+  - use-case
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Flow summary
+      description: What application flow are you testing?
+      placeholder: "Example: delegated agent wallet sends a batch payout, then receives a refund before completion."
+    validations:
+      required: true
+  - type: dropdown
+    id: actor
+    attributes:
+      label: Primary actor type
+      options:
+        - EOA
+        - EIP-7702 delegated EOA
+        - Contract
+        - Router
+        - Vault
+        - Paymaster or sponsor
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: checkpoint
+    attributes:
+      label: Checkpoint placement
+      description: Where would you call ReserveGuard?
+      placeholder: "Before payout, after transfer, before external call, after recovery, etc."
+  - type: textarea
+    id: primitive
+    attributes:
+      label: Useful or missing primitive
+      description: Which current primitive helped, or what felt missing?
+      placeholder: "checkpoint(), reserveProtected, observe(), named checkpoints, events, recovery hooks, etc."
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add any context, code links, traces, or questions.

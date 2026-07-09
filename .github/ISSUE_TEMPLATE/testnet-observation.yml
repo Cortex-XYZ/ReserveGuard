@@ -1,0 +1,62 @@
+name: Testnet observation
+description: Report live Monad testnet behavior from a ReserveGuard experiment.
+title: "[Observation]: "
+labels:
+  - testnet-observation
+body:
+  - type: input
+    id: tx
+    attributes:
+      label: Transaction hash
+      placeholder: "0x..."
+    validations:
+      required: true
+  - type: input
+    id: network
+    attributes:
+      label: Monad network
+      placeholder: "Monad testnet"
+    validations:
+      required: true
+  - type: dropdown
+    id: actor
+    attributes:
+      label: Actor type
+      options:
+        - EOA
+        - EIP-7702 delegated EOA
+        - Contract
+        - Router
+        - Vault
+        - Paymaster or sponsor
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: balances
+    attributes:
+      label: Balances
+      description: Include before, during, and after balances.
+      placeholder: |
+        before:
+        during:
+        after:
+    validations:
+      required: true
+  - type: textarea
+    id: dips
+    attributes:
+      label: Reserve observations
+      description: Include beforeDip, duringDip, and afterDip.
+      placeholder: |
+        beforeDip:
+        duringDip:
+        afterDip:
+    validations:
+      required: true
+  - type: textarea
+    id: interpretation
+    attributes:
+      label: Interpretation
+      description: What do you think this result shows?
+      placeholder: "Separate observed facts from hypotheses."

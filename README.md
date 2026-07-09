@@ -4,6 +4,12 @@ ReserveGuard is an open-source Solidity library for building reserve-aware smart
 
 It wraps Monad's MIP-4 Reserve Balance Introspection precompile at `0x1001` and provides simple primitives for detecting reserve violations, asserting healthy execution state, and placing explicit reserve checkpoints inside transaction flows.
 
+## Alpha Status
+
+ReserveGuard is entering `v0.1.0-alpha.1` field testing. The V1 API is intentionally small so Monad developers can try it in real flows before the library expands.
+
+If you test ReserveGuard in a wallet, router, vault, paymaster, batch executor, or EIP-7702 flow, use `docs/field-testing.md` to report what happened. The use-case matrix in `docs/use-case-matrix.md` tracks what has been observed and what still needs evidence.
+
 ## Install
 
 This project is scaffolded for Monad Foundry.
@@ -81,7 +87,7 @@ Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated
 
 The optional browser lab in `app/` can be used to inspect the same testnet experiment patterns, but the Solidity library and examples are the primary integration path for Monad developers.
 
-See `docs/v1.md` for the V1 release scope, non-goals, verification path, and testnet caveats.
+See `docs/v1.md` for the V1 release scope, non-goals, verification path, and testnet caveats. See `docs/releases/v0.1.0-alpha.1.md` for the alpha release notes.
 
 ## Deploy to Monad Testnet
 
