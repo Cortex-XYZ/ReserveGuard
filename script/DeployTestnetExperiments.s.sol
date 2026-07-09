@@ -7,6 +7,7 @@ import { TestnetDrainRestore } from "../examples/testnet/TestnetDrainRestore.sol
 import {
     Testnet7702DelegatedDrainRestore
 } from "../examples/testnet/Testnet7702DelegatedDrainRestore.sol";
+import { Testnet7702AgentWalletGuard } from "../examples/testnet/Testnet7702AgentWalletGuard.sol";
 
 interface Vm {
     function envUint(string calldata key) external returns (uint256);
@@ -21,7 +22,8 @@ contract DeployTestnetExperiments {
         address reserveProbe,
         address refundSink,
         address drainRestore,
-        address delegatedDrainRestoreImplementation
+        address delegatedDrainRestoreImplementation,
+        address agentWalletGuardImplementation
     );
 
     function run()
@@ -30,7 +32,8 @@ contract DeployTestnetExperiments {
             address reserveProbeAddress,
             address refundSinkAddress,
             address drainRestoreAddress,
-            address delegatedDrainRestoreImplementationAddress
+            address delegatedDrainRestoreImplementationAddress,
+            address agentWalletGuardImplementationAddress
         )
     {
         uint256 privateKey = VM.envUint("PRIVATE_KEY");
@@ -42,6 +45,8 @@ contract DeployTestnetExperiments {
         TestnetDrainRestore drainRestore = new TestnetDrainRestore();
         Testnet7702DelegatedDrainRestore delegatedImplementation =
             new Testnet7702DelegatedDrainRestore();
+        Testnet7702AgentWalletGuard agentWalletGuardImplementation =
+            new Testnet7702AgentWalletGuard();
 
         VM.stopBroadcast();
 
@@ -49,12 +54,14 @@ contract DeployTestnetExperiments {
         refundSinkAddress = address(refundSink);
         drainRestoreAddress = address(drainRestore);
         delegatedDrainRestoreImplementationAddress = address(delegatedImplementation);
+        agentWalletGuardImplementationAddress = address(agentWalletGuardImplementation);
 
         emit Deployed(
             reserveProbeAddress,
             refundSinkAddress,
             drainRestoreAddress,
-            delegatedDrainRestoreImplementationAddress
+            delegatedDrainRestoreImplementationAddress,
+            agentWalletGuardImplementationAddress
         );
     }
 }

@@ -351,9 +351,11 @@ contracts/
     ReserveProtected.sol
 
 examples/
-  FlashLoanExample.sol
+  CheckpointedExecutor.sol
   ReserveAwareVault.sol
   ReserveProtectedRouter.sol
+  testnet/
+    Testnet7702AgentWalletGuard.sol
 
 test/
 
@@ -608,7 +610,7 @@ Potential features:
 
 Potential features:
 
-- Reserve-aware flash loan executor
+- Reserve-aware agent wallet executor
 - Reserve-aware router
 - Account abstraction integrations
 - Monitoring and analytics
