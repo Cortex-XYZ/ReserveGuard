@@ -3,6 +3,7 @@
 ## Explicit Checkpoints
 
 Use checkpoints between expensive or semantically distinct execution steps.
+In V1, a checkpoint is intentionally the same behavior as `assertHealthy()`, but it communicates that the check is a deliberate execution boundary.
 
 ```solidity
 swap();
@@ -26,6 +27,7 @@ function withdraw(uint256 amount) external reserveHealthy {
 
 Use `reserveProtected` when a function should start and end in healthy reserve state.
 This is stricter than a pre-check alone.
+It is useful for routers, executors, and other functions where the body may call external contracts before control returns.
 
 ## EIP-7702 Delegated Accounts
 
@@ -39,4 +41,4 @@ After deploying the testnet experiment contracts, run the repeatable 7702 flow w
 bash scripts/run-7702-drain-restore.sh
 ```
 
-Local Foundry tests validate the integration shape. Live Monad testnet transactions are the authority for reserve-state semantics.
+Local Foundry tests validate the integration shape with mocked precompile calls and delegated routing. Live Monad testnet transactions are the authority for reserve-state semantics.

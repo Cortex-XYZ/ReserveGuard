@@ -19,7 +19,11 @@ If `forge` is not on your shell path yet, run:
 source ~/.bashrc
 ```
 
-or use the installed binary directly.
+or use the installed binary directly, for example:
+
+```bash
+~/.foundry/bin/forge test
+```
 
 ## Usage
 
@@ -57,6 +61,8 @@ contract Vault is ReserveAware {
 - `ReserveAware` exposes internal helpers and the `reserveHealthy` modifier.
 - `ReserveProtected` exposes a stricter `reserveProtected` modifier that checks before and after function execution.
 
+V1 intentionally keeps the API small. Checkpoints are explicit fail-fast boundaries; they do not emit events, label checkpoints, or attempt recovery.
+
 ## MIP-4 Notes
 
 MIP-4 defines a reserve balance precompile at `0x1001` with:
@@ -72,6 +78,8 @@ ReserveGuard preserves MIP-4 semantics and provides developer-friendly Solidity 
 Developer-facing examples live in `examples/`.
 
 Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated drain/restore experiment. See `docs/live-testnet.md` for the live Monad testnet workflow, authorization commands, verified observations, and caveats.
+
+The optional browser lab in `app/` can be used to inspect the same testnet experiment patterns, but the Solidity library and examples are the primary integration path for Monad developers.
 
 ## Deploy to Monad Testnet
 

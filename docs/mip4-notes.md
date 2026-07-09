@@ -19,3 +19,5 @@ Important details:
 - The return value is an ABI-encoded Solidity `bool`.
 - The precompile must be invoked via `CALL`.
 - ReserveGuard checkpoints fail early; they do not automatically recover an unhealthy reserve state.
+- A healthy checkpoint only describes the point where it runs. Later execution can still dip into reserve.
+- Local tests use mocked precompile responses. Live Monad testnet transactions should be used for protocol-accurate reserve-state observations.
