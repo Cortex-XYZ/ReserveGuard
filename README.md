@@ -81,6 +81,8 @@ Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated
 
 The optional browser lab in `app/` can be used to inspect the same testnet experiment patterns, but the Solidity library and examples are the primary integration path for Monad developers.
 
+See `docs/v1.md` for the V1 release scope, non-goals, verification path, and testnet caveats.
+
 ## Deploy to Monad Testnet
 
 Set your environment variables in Bash:

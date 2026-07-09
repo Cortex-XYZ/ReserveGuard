@@ -198,7 +198,7 @@ V1 includes:
 - `ReserveGuard.assertHealthy()`
 - `ReserveGuard.checkpoint()`
 - `ReserveAware` abstract contract
-- `ReserveProtected` abstract contract, if it meaningfully differs from `ReserveAware`
+- `ReserveProtected` abstract contract for pre- and post-execution reserve boundaries
 - `reserveHealthy` modifier
 - `ReserveViolation` custom error
 - Unit tests
@@ -306,14 +306,12 @@ contract LendingVault is ReserveAware {
 }
 ```
 
-At minimum, V1 must include `ReserveAware`.
-
-`ReserveProtected` should be included only if it has a clear, distinct role. For example:
+V1 includes `ReserveAware` and `ReserveProtected` with distinct roles:
 
 - `ReserveAware`: exposes internal helpers and modifiers
-- `ReserveProtected`: applies stricter patterns or additional wrapper behavior
+- `ReserveProtected`: applies a stricter `reserveProtected` modifier that checks before and after function execution
 
-If no meaningful distinction exists during implementation, `ReserveProtected` should be deferred.
+`ReserveProtected` is useful for routers, executors, and integration wrappers where external calls may occur inside the protected function body.
 
 ### FR-6: Standardized Errors
 
@@ -620,23 +618,21 @@ Potential features:
 
 1. Can reserve state transition from healthy to violation to healthy within a single transaction?
 2. Are reserve violations expected to be recoverable during execution in common real-world flows?
-3. Should V1 include `ReserveProtected`, or should it wait until there is a distinct abstraction beyond `ReserveAware`?
-4. Should ReserveGuard expose only high-level abstractions in docs, or also document low-level precompile access for advanced users?
-5. What gas optimization opportunities exist around repeated reserve checks?
-6. Should V1 assertions support only `ReserveViolation()`, or allow caller-defined errors later?
-7. What reserve-aware patterns emerge after Monad developers begin using MIP-4 in production-like applications?
+3. What gas optimization opportunities exist around repeated reserve checks?
+4. What reserve-aware patterns emerge after Monad developers begin using MIP-4 in production-like applications?
 
-## 21. Build Readiness Checklist
+## 21. V1 Release Readiness Checklist
 
-- Decide Solidity tooling: Foundry, Hardhat, or both
-- Define package layout
-- Implement `IReserveBalance`
-- Implement `ReserveGuard`
-- Implement `ReserveAware`
-- Decide whether `ReserveProtected` belongs in V1
-- Add examples
-- Add unit tests
-- Add integration-test strategy
-- Write README
-- Write docs
-- Validate behavior against MIP-4-compatible Monad environment
+- [x] Use Foundry as the Solidity toolchain
+- [x] Implement `IReserveBalance`
+- [x] Implement `ReserveGuard`
+- [x] Implement `ReserveAware`
+- [x] Include `ReserveProtected` as the pre/post boundary base contract
+- [x] Keep V1 assertions standardized on `ReserveViolation()`
+- [x] Add examples
+- [x] Add unit tests for detection, assertions, checkpoints, modifiers, and precompile failure propagation
+- [x] Document the Monad testnet integration path
+- [x] Write README and docs
+- [x] Validate observed MIP-4 behavior against Monad testnet
+- [x] Add continuous integration for contracts and the optional lab UI
+- [ ] Cut a release candidate tag

@@ -106,9 +106,7 @@ contract ReserveGuardTest {
         bytes memory revertData = bytes("PRECOMPILE_FAILED");
         VM.clearMockedCalls();
         VM.mockCallRevert(
-            RESERVE_BALANCE_PRECOMPILE,
-            abi.encodeWithSignature("dippedIntoReserve()"),
-            revertData
+            RESERVE_BALANCE_PRECOMPILE, abi.encodeWithSignature("dippedIntoReserve()"), revertData
         );
 
         VM.expectRevert(revertData);
