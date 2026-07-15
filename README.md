@@ -89,6 +89,8 @@ The optional browser lab in `app/` can be used to inspect the same testnet exper
 
 See `docs/v1.md` for the V1 release scope, non-goals, verification path, and testnet caveats. See `docs/releases/v0.1.0-alpha.1.md` for the alpha release notes.
 
+Experimental post-V1 work lives under `contracts/experimental/`. See `docs/experimental/reserve-trace.md` for the first labeled observation and checkpoint experiment.
+
 ## Deploy to Monad Testnet
 
 Set your environment variables in Bash:

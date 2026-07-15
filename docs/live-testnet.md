@@ -64,6 +64,8 @@ For `DeployTestnetExperiments`, use this mapping:
 | 2 | `TestnetRefundSink` | `REFUND_SINK` |
 | 3 | `TestnetDrainRestore` | `DRAIN_RESTORE` |
 | 4 | `Testnet7702DelegatedDrainRestore` | `DELEGATED_IMPL` |
+| 5 | `Testnet7702TracedDrainRestore` | `TRACED_DELEGATED_IMPL` |
+| 6 | `Testnet7702AgentWalletGuard` | `AGENT_WALLET_GUARD_IMPL` |
 
 Set the deployed addresses in your shell:
 
@@ -77,6 +79,8 @@ export TESTNET_PROBE="0x..."
 export REFUND_SINK="0x..."
 export DRAIN_RESTORE="0x..."
 export DELEGATED_IMPL="0x..."
+export TRACED_DELEGATED_IMPL="0x..."
+export AGENT_WALLET_GUARD_IMPL="0x..."
 ```
 
 You can also extract them from Foundry's broadcast JSON with `jq`:
@@ -101,6 +105,8 @@ export TESTNET_PROBE=$(jq -r '.transactions[] | select(.contractName=="TestnetRe
 export REFUND_SINK=$(jq -r '.transactions[] | select(.contractName=="TestnetRefundSink") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 export DRAIN_RESTORE=$(jq -r '.transactions[] | select(.contractName=="TestnetDrainRestore") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 export DELEGATED_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702DelegatedDrainRestore") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
+export TRACED_DELEGATED_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702TracedDrainRestore") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
+export AGENT_WALLET_GUARD_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702AgentWalletGuard") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 ```
 
 If `jq` is not installed, copy the addresses manually from the terminal output using the order tables above.
@@ -179,6 +185,12 @@ Use `Testnet7702DelegatedDrainRestore` as the implementation attached to the del
 drainRestore(TestnetRefundSink sink, uint256 amount)
 ```
 
+For a labeled ReserveTrace version of the same experiment, use `Testnet7702TracedDrainRestore` by setting:
+
+```bash
+export DELEGATED_IMPL="$TRACED_DELEGATED_IMPL"
+```
+
 ### 7702 Roles
 
 | Role | Meaning |
@@ -253,6 +265,22 @@ The contract emits:
 ReserveObservation("before", account, caller, balance, dipped)
 ReserveObservation("during", account, caller, balance, dipped)
 ReserveObservation("after", account, caller, balance, dipped)
+```
+
+The traced implementation emits `ReserveTrace` labels instead:
+
+```solidity
+ReserveObserved(BEFORE_DRAIN, account, caller, balance, dipped)
+ReserveObserved(DURING_DRAIN, account, caller, balance, dipped)
+ReserveObserved(AFTER_RESTORE, account, caller, balance, dipped)
+```
+
+The label constants are:
+
+```solidity
+keccak256("reserveguard.7702.before-drain")
+keccak256("reserveguard.7702.during-drain")
+keccak256("reserveguard.7702.after-restore")
 ```
 
 The expected successful testnet shape is:

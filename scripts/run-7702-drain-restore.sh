@@ -9,7 +9,7 @@ Required environment:
   MONAD_RPC_URL
   PRIVATE_KEY or SPONSOR_PRIVATE_KEY
   DELEGATED_AUTHORITY_PRIVATE_KEY
-  DELEGATED_IMPL
+  DELEGATED_IMPL       Use either the base delegated implementation or traced implementation.
   REFUND_SINK
 
 Optional environment:
@@ -120,6 +120,12 @@ echo "Recorded reserve state:"
 echo "  beforeDip: $(cast call "$DELEGATED_AUTHORITY" "lastBeforeDip()(bool)" --rpc-url "$MONAD_RPC_URL")"
 echo "  duringDip: $(cast call "$DELEGATED_AUTHORITY" "lastDuringDip()(bool)" --rpc-url "$MONAD_RPC_URL")"
 echo "  afterDip:  $(cast call "$DELEGATED_AUTHORITY" "lastAfterDip()(bool)" --rpc-url "$MONAD_RPC_URL")"
+echo
+
+echo "If DELEGATED_IMPL is Testnet7702TracedDrainRestore, inspect transaction logs for:"
+echo "  ReserveObserved(reserveguard.7702.before-drain, authority, sponsor, balance, dipped)"
+echo "  ReserveObserved(reserveguard.7702.during-drain, authority, sponsor, balance, dipped)"
+echo "  ReserveObserved(reserveguard.7702.after-restore, authority, sponsor, balance, dipped)"
 echo
 
 echo "Expected successful shape:"

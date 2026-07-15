@@ -9,6 +9,9 @@ import { ReserveProtectedRouter } from "../examples/ReserveProtectedRouter.sol";
 import {
     Testnet7702DelegatedDrainRestore
 } from "../examples/testnet/Testnet7702DelegatedDrainRestore.sol";
+import {
+    Testnet7702TracedDrainRestore
+} from "../examples/testnet/Testnet7702TracedDrainRestore.sol";
 import { TestnetDrainRestore } from "../examples/testnet/TestnetDrainRestore.sol";
 import { TestnetRefundSink } from "../examples/testnet/TestnetRefundSink.sol";
 import { TestnetReserveProbe } from "../examples/testnet/TestnetReserveProbe.sol";
@@ -17,6 +20,8 @@ interface Vm {
     function addr(uint256 privateKey) external returns (address);
     function clearMockedCalls() external;
     function deal(address account, uint256 newBalance) external;
+    function expectEmit(bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData)
+        external;
     function expectRevert(bytes4 revertData) external;
     function mockCall(address callee, bytes calldata data, bytes calldata returnData) external;
     function prank(address msgSender) external;
@@ -36,6 +41,14 @@ contract ExamplesTest {
     address internal constant RESERVE_BALANCE_PRECOMPILE = address(0x1001);
     uint256 internal constant AUTHORITY_PK = 0xA11CE;
     Vm internal constant VM = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+
+    event ReserveObserved(
+        bytes32 indexed checkpoint,
+        address indexed account,
+        address indexed caller,
+        uint256 balance,
+        bool dipped
+    );
 
     receive() external payable { }
 
@@ -140,6 +153,39 @@ contract ExamplesTest {
         _assertEq(Testnet7702DelegatedDrainRestore(authority).lastBeforeBalance(), 19 ether);
         _assertEq(Testnet7702DelegatedDrainRestore(authority).lastDuringBalance(), 9 ether);
         _assertEq(Testnet7702DelegatedDrainRestore(authority).lastAfterBalance(), 19 ether);
+    }
+
+    function test7702TracedDrainRestoreEmitsReserveTraceLabels() external {
+        _setDipped(false);
+
+        address payable authority = payable(VM.addr(AUTHORITY_PK));
+        address sponsor = address(0xBEEF);
+
+        TestnetRefundSink sink = new TestnetRefundSink();
+        Testnet7702TracedDrainRestore implementation = new Testnet7702TracedDrainRestore();
+
+        VM.deal(authority, 19 ether);
+        VM.deal(sponsor, 1 ether);
+        VM.signAndAttachDelegation(address(implementation), AUTHORITY_PK);
+
+        VM.expectEmit(true, true, true, true);
+        emit ReserveObserved(implementation.BEFORE_DRAIN(), authority, sponsor, 19 ether, false);
+        VM.expectEmit(true, true, true, true);
+        emit ReserveObserved(implementation.DURING_DRAIN(), authority, sponsor, 9 ether, false);
+        VM.expectEmit(true, true, true, true);
+        emit ReserveObserved(implementation.AFTER_RESTORE(), authority, sponsor, 19 ether, false);
+
+        VM.prank(sponsor);
+        (bool beforeDip, bool duringDip, bool afterDip) =
+            Testnet7702TracedDrainRestore(authority).drainRestore(sink, 10 ether);
+
+        _assertFalse(beforeDip);
+        _assertFalse(duringDip);
+        _assertFalse(afterDip);
+        _assertEq(authority.balance, 19 ether);
+        _assertEq(Testnet7702TracedDrainRestore(authority).lastBeforeBalance(), 19 ether);
+        _assertEq(Testnet7702TracedDrainRestore(authority).lastDuringBalance(), 9 ether);
+        _assertEq(Testnet7702TracedDrainRestore(authority).lastAfterBalance(), 19 ether);
     }
 
     function _setDipped(bool value) internal {

@@ -5,6 +5,7 @@ export type ContractKey =
   | "testnetRefundSink"
   | "testnetDrainRestore"
   | "testnet7702DelegatedDrainRestore"
+  | "testnet7702TracedDrainRestore"
   | "testnet7702AgentWalletGuard";
 
 export type ContractConfig = {
@@ -50,6 +51,13 @@ export const contractConfigs = [
     envName: "VITE_DELEGATED_IMPL",
     queryParam: "delegatedImpl",
     defaultAddress: envAddress(import.meta.env.VITE_DELEGATED_IMPL),
+  },
+  {
+    key: "testnet7702TracedDrainRestore",
+    label: "Testnet7702TracedDrainRestore",
+    envName: "VITE_TRACED_DELEGATED_IMPL",
+    queryParam: "tracedDelegatedImpl",
+    defaultAddress: envAddress(import.meta.env.VITE_TRACED_DELEGATED_IMPL),
   },
   {
     key: "testnet7702AgentWalletGuard",

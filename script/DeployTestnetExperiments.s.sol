@@ -8,6 +8,9 @@ import {
     Testnet7702DelegatedDrainRestore
 } from "../examples/testnet/Testnet7702DelegatedDrainRestore.sol";
 import { Testnet7702AgentWalletGuard } from "../examples/testnet/Testnet7702AgentWalletGuard.sol";
+import {
+    Testnet7702TracedDrainRestore
+} from "../examples/testnet/Testnet7702TracedDrainRestore.sol";
 
 interface Vm {
     function envUint(string calldata key) external returns (uint256);
@@ -23,6 +26,7 @@ contract DeployTestnetExperiments {
         address refundSink,
         address drainRestore,
         address delegatedDrainRestoreImplementation,
+        address tracedDelegatedDrainRestoreImplementation,
         address agentWalletGuardImplementation
     );
 
@@ -33,6 +37,7 @@ contract DeployTestnetExperiments {
             address refundSinkAddress,
             address drainRestoreAddress,
             address delegatedDrainRestoreImplementationAddress,
+            address tracedDelegatedDrainRestoreImplementationAddress,
             address agentWalletGuardImplementationAddress
         )
     {
@@ -45,6 +50,8 @@ contract DeployTestnetExperiments {
         TestnetDrainRestore drainRestore = new TestnetDrainRestore();
         Testnet7702DelegatedDrainRestore delegatedImplementation =
             new Testnet7702DelegatedDrainRestore();
+        Testnet7702TracedDrainRestore tracedDelegatedImplementation =
+            new Testnet7702TracedDrainRestore();
         Testnet7702AgentWalletGuard agentWalletGuardImplementation =
             new Testnet7702AgentWalletGuard();
 
@@ -54,6 +61,7 @@ contract DeployTestnetExperiments {
         refundSinkAddress = address(refundSink);
         drainRestoreAddress = address(drainRestore);
         delegatedDrainRestoreImplementationAddress = address(delegatedImplementation);
+        tracedDelegatedDrainRestoreImplementationAddress = address(tracedDelegatedImplementation);
         agentWalletGuardImplementationAddress = address(agentWalletGuardImplementation);
 
         emit Deployed(
@@ -61,6 +69,7 @@ contract DeployTestnetExperiments {
             refundSinkAddress,
             drainRestoreAddress,
             delegatedDrainRestoreImplementationAddress,
+            tracedDelegatedDrainRestoreImplementationAddress,
             agentWalletGuardImplementationAddress
         );
     }

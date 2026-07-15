@@ -1882,6 +1882,137 @@ h3 {
   font-weight: 800;
 }
 
+.traceModeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding: 14px 0;
+}
+
+.traceModeBar > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.traceModeBar span {
+  color: var(--ink-muted);
+  font-size: 0.73rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.traceModeBar small {
+  color: var(--ink-muted);
+  line-height: 1.45;
+}
+
+.reserveTraceReceipt {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.reserveTraceHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.reserveTraceHeader h3 {
+  margin: 0;
+}
+
+.reserveTraceHeader > span {
+  color: var(--accent-strong);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.reserveTraceEvents {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reserveTraceEvents article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 9px;
+  min-width: 0;
+  border-left: 3px solid var(--accent);
+  padding: 10px 0 10px 10px;
+}
+
+.reserveTraceEvents article.dipped {
+  border-left-color: var(--danger);
+}
+
+.reserveTraceEvents article > svg {
+  grid-row: 1 / span 2;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.reserveTraceEvents article.dipped > svg {
+  color: var(--danger);
+}
+
+.reserveTraceEvents article > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reserveTraceEvents span,
+.reserveTraceEvents small,
+.reserveTraceEvents dt {
+  color: var(--ink-muted);
+  font-size: 0.73rem;
+  font-weight: 800;
+}
+
+.reserveTraceEvents span,
+.reserveTraceEvents dt {
+  text-transform: uppercase;
+}
+
+.reserveTraceEvents strong,
+.reserveTraceEvents small,
+.reserveTraceEvents dd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reserveTraceEvents dl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.reserveTraceEvents dl div {
+  min-width: 0;
+}
+
+.reserveTraceEvents dt,
+.reserveTraceEvents dd {
+  margin: 0;
+}
+
+.reserveTraceEvents dd {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
 .summaryBox {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2046,6 +2177,9 @@ h3 {
   .flashAuthorityBar,
   .eipPreflightGrid,
   .eipRunGrid,
+  .eipRunGrid.selfRun,
+  .eipRunGrid.threeColumns,
+  .eipRunGrid.withdrawGrid,
   .flashRunPanel,
   .agentQueue,
   .agentSimulator,
@@ -2057,6 +2191,7 @@ h3 {
   .observationGrid,
   .resultLookup,
   .resultGrid,
+  .reserveTraceEvents,
   .summaryBox,
   .addressGrid,
   .findingsList {
@@ -2087,6 +2222,12 @@ h3 {
 
   .lookupActions {
     justify-content: flex-start;
+  }
+
+  .traceModeBar,
+  .reserveTraceHeader {
+    align-items: start;
+    flex-direction: column;
   }
 
   .timelineControls {

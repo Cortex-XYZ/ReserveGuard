@@ -18,6 +18,7 @@ import {
   http,
   isAddress,
   parseEther,
+  zeroAddress,
   type Address,
   type Hash,
   type Hex,
@@ -26,6 +27,11 @@ import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 
 import { useBalance, usePublicClient, useReadContracts } from "wagmi";
 import { experimentObservationAbi } from "../abi/ExperimentObservation";
 import { testnetDrainRestoreAbi } from "../abi/TestnetDrainRestore";
+import {
+  decodeReserveTraceEvents,
+  ReserveTraceTimeline,
+  type ReserveTraceEvent,
+} from "../components/ReserveTraceTimeline";
 import { monadTestnet } from "../config/chains";
 import type { ContractAddressSet } from "../config/contracts";
 import { formatDip, formatMon } from "../lib/format";
@@ -53,6 +59,8 @@ type RunStatus = {
   tone: "muted" | "error" | "success";
   message: string;
 };
+
+type ExecutionMode = "recorded" | "traced";
 
 function loadAuthority(): PrivateKeyAccount | null {
   if (typeof window === "undefined") {
@@ -85,6 +93,7 @@ function getFriendlyErrorMessage(error: unknown) {
 export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainRestoreProps) {
   const publicClient = usePublicClient();
   const [authority, setAuthority] = useState<PrivateKeyAccount | null>(() => loadAuthority());
+  const [executionMode, setExecutionMode] = useState<ExecutionMode>("traced");
   const [drainAmount, setDrainAmount] = useState("10");
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -94,6 +103,8 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
   });
   const [runHash, setRunHash] = useState<Hash | null>(null);
   const [withdrawHash, setWithdrawHash] = useState<Hash | null>(null);
+  const [traceReceiptHash, setTraceReceiptHash] = useState<Hash | null>(null);
+  const [traceEvents, setTraceEvents] = useState<ReserveTraceEvent[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -126,6 +137,11 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
   const duringDip = hasCompleteResult ? (values?.[4].result as boolean) : null;
   const afterDip = hasCompleteResult ? (values?.[5].result as boolean) : null;
   const hasReserveRoom = authorityBalance.data ? authorityBalance.data.value > RESERVE_FLOOR : false;
+  const selectedImplementation =
+    executionMode === "traced"
+      ? addresses.testnet7702TracedDrainRestore
+      : addresses.testnet7702DelegatedDrainRestore;
+  const hasSelectedImplementation = isAddress(selectedImplementation) && selectedImplementation !== zeroAddress;
   const validWithdrawAddress = isAddress(withdrawAddress.trim()) ? getAddress(withdrawAddress.trim()) : null;
   const parsedWithdrawAmount = (() => {
     try {
@@ -142,7 +158,7 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
     parsedWithdrawAmount !== null && authorityBalance.data
       ? authorityBalance.data.value - parsedWithdrawAmount >= WITHDRAW_KEEPALIVE
       : false;
-  const canRun = Boolean(publicClient && authority && drainAmount && hasReserveRoom);
+  const canRun = Boolean(publicClient && authority && drainAmount && hasReserveRoom && hasSelectedImplementation);
   const canWithdraw = Boolean(publicClient && authority && validWithdrawAddress && parsedWithdrawAmount && leavesReserveAfterWithdraw);
 
   const progressSteps = useMemo(
@@ -185,6 +201,8 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
     setAuthority(nextAuthority);
     setRunHash(null);
     setWithdrawHash(null);
+    setTraceReceiptHash(null);
+    setTraceEvents([]);
     setRunStatus({
       tone: "success",
       message: `Created test authority ${shortAddress(nextAuthority.address)}. Copy the address and fund it from any Monad testnet wallet.`,
@@ -197,6 +215,8 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
     setAuthority(null);
     setRunHash(null);
     setWithdrawHash(null);
+    setTraceReceiptHash(null);
+    setTraceEvents([]);
     setRunStatus({
       tone: "muted",
       message: "Authority cleared. Create a fresh test authority when you are ready.",
@@ -227,6 +247,8 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
 
     try {
       setIsRunning(true);
+      setTraceReceiptHash(null);
+      setTraceEvents([]);
       setRunStatus({
         tone: "muted",
         message: "Signing the EIP-7702 authorization with the disposable authority...",
@@ -234,7 +256,7 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
       const authorization = await authorityWallet.signAuthorization({
         account: authority,
         chainId: monadTestnet.id,
-        contractAddress: addresses.testnet7702DelegatedDrainRestore,
+        contractAddress: selectedImplementation,
         executor: "self",
       });
       const data = encodeFunctionData({
@@ -258,8 +280,29 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
         tone: "muted",
         message: "Transaction sent. Waiting for the reserve trace to land onchain...",
       });
-      await publicClient.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
       await Promise.all([reads.refetch(), authorityBalance.refetch()]);
+
+      if (executionMode === "traced") {
+        const events = decodeReserveTraceEvents(receipt.logs);
+        setTraceReceiptHash(hash);
+        setTraceEvents(events);
+
+        if (events.length === 0) {
+          setRunStatus({
+            tone: "error",
+            message: "The transaction completed, but no ReserveTrace events decoded. Confirm the traced implementation address.",
+          });
+          return;
+        }
+
+        setRunStatus({
+          tone: "success",
+          message: `Run complete. Decoded ${events.length} ReserveTrace events directly from the transaction receipt.`,
+        });
+        return;
+      }
+
       setRunStatus({
         tone: "success",
         message: "Run complete. The cards below show what ReserveGuard observed inside the test authority.",
@@ -369,12 +412,44 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
           <strong>{authorityBalance.data ? formatMon(authorityBalance.data.value) : "No balance yet"}</strong>
           <small>Send MON to the copied authority address from any Monad testnet wallet.</small>
         </article>
-        <article className="ready">
-          <CheckCircle2 aria-hidden="true" />
+        <article className={hasSelectedImplementation ? "ready" : ""}>
+          {hasSelectedImplementation ? <CheckCircle2 aria-hidden="true" /> : <ShieldAlert aria-hidden="true" />}
           <span>Implementation</span>
-          <strong>{shortAddress(addresses.testnet7702DelegatedDrainRestore)}</strong>
-          <small>Audited demo code that the authority delegates to for this lab.</small>
+          <strong>{hasSelectedImplementation ? shortAddress(selectedImplementation) : "Address needed"}</strong>
+          <small>
+            {executionMode === "traced"
+              ? "ReserveTrace implementation emits the receipt timeline below."
+              : "Base implementation records results in delegated authority storage."}
+          </small>
         </article>
+      </div>
+      <div className="traceModeBar">
+        <div>
+          <span>Execution evidence</span>
+          <small>
+            {executionMode === "traced"
+              ? "Decode labeled ReserveTrace events from the completed transaction."
+              : "Read the delegated authority's stored before, during, and after state."}
+          </small>
+        </div>
+        <div className="modeSwitch" role="group" aria-label="Delegated experiment mode">
+          <button
+            type="button"
+            className={executionMode === "traced" ? "active" : ""}
+            aria-pressed={executionMode === "traced"}
+            onClick={() => setExecutionMode("traced")}
+          >
+            ReserveTrace
+          </button>
+          <button
+            type="button"
+            className={executionMode === "recorded" ? "active" : ""}
+            aria-pressed={executionMode === "recorded"}
+            onClick={() => setExecutionMode("recorded")}
+          >
+            Stored state
+          </button>
+        </div>
       </div>
       <div className="eipRunGrid selfRun">
         <label className="lookupField">
@@ -431,6 +506,7 @@ export function Delegated7702DrainRestore({ addresses }: Delegated7702DrainResto
           <small>dipped={afterDip === null ? "unknown" : formatDip(afterDip)}</small>
         </article>
       </div>
+      {traceReceiptHash ? <ReserveTraceTimeline events={traceEvents} /> : null}
       <div className="withdrawPanel" aria-labelledby="withdraw-heading">
         <div className="withdrawHeader">
           <div>
