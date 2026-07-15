@@ -21,3 +21,4 @@ Important details:
 - ReserveGuard checkpoints fail early; they do not automatically recover an unhealthy reserve state.
 - A healthy checkpoint only describes the point where it runs. Later execution can still dip into reserve.
 - Local tests use mocked precompile responses. Live Monad testnet transactions should be used for protocol-accurate reserve-state observations.
+- EIP-7702 authorization state may affect observed behavior. Keep fresh, repeated, and persisted delegation results separate until the current discrepancy is resolved.

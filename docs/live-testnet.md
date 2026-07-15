@@ -13,9 +13,11 @@ You need three things before deploying:
 | Test MON | Monad faucet: `https://faucet.monad.xyz`. |
 
 ```bash
-export MONAD_RPC_URL="https://..."
+export MONAD_RPC_URL="https://rpc.testnet.monad.xyz"
 export PRIVATE_KEY="0x..."
 ```
+
+You may substitute another Monad testnet RPC provider. Confirm it reports chain ID `10143` before broadcasting.
 
 Get test MON from the Monad faucet:
 
@@ -66,6 +68,8 @@ For `DeployTestnetExperiments`, use this mapping:
 | 4 | `Testnet7702DelegatedDrainRestore` | `DELEGATED_IMPL` |
 | 5 | `Testnet7702TracedDrainRestore` | `TRACED_DELEGATED_IMPL` |
 | 6 | `Testnet7702AgentWalletGuard` | `AGENT_WALLET_GUARD_IMPL` |
+| 7 | `Testnet7702RecoverableAgentWallet` | `RECOVERABLE_AGENT_WALLET_IMPL` |
+| 8 | `TestnetNoopRefundSink` | `NOOP_REFUND_SINK` |
 
 Set the deployed addresses in your shell:
 
@@ -81,6 +85,8 @@ export DRAIN_RESTORE="0x..."
 export DELEGATED_IMPL="0x..."
 export TRACED_DELEGATED_IMPL="0x..."
 export AGENT_WALLET_GUARD_IMPL="0x..."
+export RECOVERABLE_AGENT_WALLET_IMPL="0x..."
+export NOOP_REFUND_SINK="0x..."
 ```
 
 You can also extract them from Foundry's broadcast JSON with `jq`:
@@ -107,6 +113,8 @@ export DRAIN_RESTORE=$(jq -r '.transactions[] | select(.contractName=="TestnetDr
 export DELEGATED_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702DelegatedDrainRestore") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 export TRACED_DELEGATED_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702TracedDrainRestore") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 export AGENT_WALLET_GUARD_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702AgentWalletGuard") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
+export RECOVERABLE_AGENT_WALLET_IMPL=$(jq -r '.transactions[] | select(.contractName=="Testnet7702RecoverableAgentWallet") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
+export NOOP_REFUND_SINK=$(jq -r '.transactions[] | select(.contractName=="TestnetNoopRefundSink") | .contractAddress' broadcast/DeployTestnetExperiments.s.sol/10143/run-latest.json)
 ```
 
 If `jq` is not installed, copy the addresses manually from the terminal output using the order tables above.
@@ -315,6 +323,54 @@ cast balance "$DELEGATED_AUTHORITY" --ether --rpc-url "$MONAD_RPC_URL"
 
 For the drain/restore shape, the delegated authority should start above `10 MON`, drain below `10 MON` during execution, and return above `10 MON` before completion.
 
+## Test Recoverable Agent Wallet
+
+This experiment keeps recovery policy in the delegated wallet while `ReserveRecoverable` standardizes detection and post-recovery verification.
+
+Sign a fresh authorization for the recoverable implementation:
+
+```bash
+export RECOVERY_AUTH=$(cast wallet sign-auth "$RECOVERABLE_AGENT_WALLET_IMPL" \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$DELEGATED_AUTHORITY_PRIVATE_KEY")
+```
+
+For the recovery path, start the delegated authority above `10 MON` and choose an amount that moves it below `10 MON`:
+
+```bash
+cast send "$DELEGATED_AUTHORITY" "runRecoverableBatch(address,uint256)" \
+  "$REFUND_SINK" 10ether \
+  --auth "$RECOVERY_AUTH" \
+  --rpc-url "$MONAD_RPC_URL" \
+  --private-key "$PRIVATE_KEY"
+```
+
+Expected successful shape:
+
+```text
+beforeDip = false
+duringDip = true
+recoveryAttempted = true
+afterDip = false
+```
+
+Inspect the delegated authority storage:
+
+```bash
+cast call "$DELEGATED_AUTHORITY" "lastBeforeBalance()(uint256)" --rpc-url "$MONAD_RPC_URL"
+cast call "$DELEGATED_AUTHORITY" "lastDuringBalance()(uint256)" --rpc-url "$MONAD_RPC_URL"
+cast call "$DELEGATED_AUTHORITY" "lastAfterBalance()(uint256)" --rpc-url "$MONAD_RPC_URL"
+cast call "$DELEGATED_AUTHORITY" "lastRecoveryAttempted()(bool)" --rpc-url "$MONAD_RPC_URL"
+cast call "$DELEGATED_AUTHORITY" "lastRecoverySucceeded()(bool)" --rpc-url "$MONAD_RPC_URL"
+cast call "$DELEGATED_AUTHORITY" "lastAfterDip()(bool)" --rpc-url "$MONAD_RPC_URL"
+```
+
+A smaller payout that leaves the authority above reserve should skip recovery and leave the payout in the sink.
+
+To exercise failed recovery, use `NOOP_REFUND_SINK` with a newly installed recoverable delegation. Re-authorizing the same implementation on an already-delegated authority produced a different result in one live run: MIP-4 remained false at every checkpoint even though the transaction was ultimately rejected and rolled back.
+
+Revoke the existing delegation or use a previously unused authority before treating the no-op run as a failed-recovery control. See the [dated field observation](observations/2026-07-15-repeated-7702-authorization.md) for the evidence and open questions.
+
 ## Verified Live Testnet Observations
 
 The following observations have been reproduced with these contracts on Monad testnet.
@@ -375,6 +431,41 @@ In a real EIP-7702 authorization-list transaction, a delegated EOA crossing belo
 ```
 
 This validates the primary ReserveGuard use case for explicit reserve checkpoints in delegated-account flows.
+
+### Recoverable EIP-7702 Wallet
+
+A fresh authorization of `Testnet7702RecoverableAgentWallet` successfully observed a dip and restored the delegated authority before completion:
+
+```text
+hash: 0x040bbdb0818ad296099df9462775d627073c0b691b6dbb5e2f02f9f9c16834bf
+block: 45245743
+type/status: 4 / success
+balance: 17.8313790704 -> 7.8313790704 -> 17.8313790704 MON
+dipped: false -> true -> true -> false
+recovery attempted: false -> false -> true -> true
+recovery succeeded: false -> false -> false -> true
+```
+
+This is live evidence that `ReserveRecoverable` can detect and repair the fresh-authorization reserve-dip shape when its recovery hook succeeds.
+
+### Repeated Authorization Discrepancy
+
+A later type-4 transaction re-authorized the same already-installed recoverable implementation and used a no-op refund sink:
+
+```text
+hash: 0x4e75ae92aa87cfc03ac96f7a725669bfe1c9559c7985946205cd68b8e7599e90
+block: 45246894
+status: failed
+on-chain gas used: 1000000 of 1000000
+retained logs: none
+cast run result: successful execution, 144340 gas
+mid-execution balance in replay: 7.8313790704 MON
+dipped at every replayed checkpoint: false
+```
+
+The replay skipped recovery because the MIP-4 signal remained false, while the on-chain transaction failed and rolled back. This is a reproducible discrepancy, not yet a confirmed Monad bug.
+
+The controls changed both delegation state and refund-sink behavior, so further isolation is required. See [Repeated EIP-7702 Authorization Reserve-Signal Discrepancy](observations/2026-07-15-repeated-7702-authorization.md).
 
 ## Record Evidence
 

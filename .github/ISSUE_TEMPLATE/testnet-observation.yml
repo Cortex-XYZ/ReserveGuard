@@ -18,6 +18,26 @@ body:
       placeholder: "Monad testnet"
     validations:
       required: true
+  - type: input
+    id: transaction_shape
+    attributes:
+      label: Transaction shape
+      description: Include transaction type, receipt status, and gas used.
+      placeholder: "type 4, status 1, gas used 221411"
+    validations:
+      required: true
+  - type: dropdown
+    id: authorization_state
+    attributes:
+      label: EIP-7702 authorization state
+      options:
+        - Not applicable
+        - Fresh delegation installation
+        - Repeated authorization to installed implementation
+        - Persisted delegation without authorization list
+        - Other or unknown
+    validations:
+      required: true
   - type: dropdown
     id: actor
     attributes:
@@ -54,6 +74,11 @@ body:
         afterDip:
     validations:
       required: true
+  - type: textarea
+    id: replay
+    attributes:
+      label: Receipt and replay comparison
+      description: If available, compare the on-chain receipt with `cast run`, including status, logs, gas, and reserve observations.
   - type: textarea
     id: interpretation
     attributes:

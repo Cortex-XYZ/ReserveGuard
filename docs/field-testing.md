@@ -12,7 +12,7 @@ reserveHealthy;
 reserveProtected;
 ```
 
-Avoid adding custom recovery frameworks until the transaction shape is understood.
+Use these stable primitives first. Opt into `ReserveTrace` or `ReserveRecoverable` only for deliberate experimental testing, and report the exact authorization and recovery shape.
 
 ## What To Test
 
@@ -55,6 +55,8 @@ duringDip:
 afterDip:
 
 Did the transaction recover before completion?
+Was recovery attempted?
+Did the post-recovery reserve check pass?
 Did ReserveGuard fail early?
 What primitive felt useful or missing?
 ```

@@ -42,3 +42,16 @@ bash scripts/run-7702-drain-restore.sh
 ```
 
 Local Foundry tests validate the integration shape with mocked precompile calls and delegated routing. Live Monad testnet transactions are the authority for reserve-state semantics.
+
+## Experimental Recovery
+
+Use `ReserveRecoverable` only when the application has an explicit, authorized way to restore reserve health. The helper:
+
+1. checks whether the transaction has dipped
+2. invokes the application's recovery hook when needed
+3. checks MIP-4 again
+4. reverts if recovery did not restore health
+
+A fresh EIP-7702 authorization successfully completed this flow on Monad testnet. Re-authorizing an already-installed implementation produced a discrepant result in one run: replay reported no dip while the on-chain transaction failed and rolled back.
+
+Treat fresh, repeated, and persisted delegation as separate test shapes. See `docs/experimental/reserve-recoverable.md` and the dated report under `docs/observations/`.

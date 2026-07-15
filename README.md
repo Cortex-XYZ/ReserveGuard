@@ -6,12 +6,15 @@ It wraps Monad's MIP-4 Reserve Balance Introspection precompile at `0x1001` and 
 
 ## Alpha Status
 
-ReserveGuard is entering `v0.1.0-alpha.1` field testing. The V1 API is intentionally small so Monad developers can try it in real flows before the library expands.
+`v0.1.0-alpha.1` is the current stable field-testing baseline. The V1 API is intentionally small so Monad developers can try it in real flows before the library expands.
 
 If you test ReserveGuard in a wallet, router, vault, paymaster, batch executor, or EIP-7702 flow, use `docs/field-testing.md` to report what happened. The use-case matrix in `docs/use-case-matrix.md` tracks what has been observed and what still needs evidence.
 
-## Install
+## Documentation
 
+See the [documentation map](docs/README.md) for stable V1, field testing, experimental work, dated observations, and historical release notes.
+
+## Install
 This project is scaffolded for Monad Foundry.
 
 ```bash
@@ -83,20 +86,20 @@ ReserveGuard preserves MIP-4 semantics and provides developer-friendly Solidity 
 
 Developer-facing examples live in `examples/`.
 
-Testnet experiments live in `examples/testnet/`, including an EIP-7702 delegated drain/restore experiment. See `docs/live-testnet.md` for the live Monad testnet workflow, authorization commands, verified observations, and caveats.
+Testnet experiments live in `examples/testnet/`, including EIP-7702 delegated drain/restore, tracing, agent-wallet, and recovery experiments. See `docs/live-testnet.md` for the live Monad testnet workflow, authorization commands, verified observations, and caveats.
 
 The optional browser lab in `app/` can be used to inspect the same testnet experiment patterns, but the Solidity library and examples are the primary integration path for Monad developers.
 
 See `docs/v1.md` for the V1 release scope, non-goals, verification path, and testnet caveats. See `docs/releases/v0.1.0-alpha.1.md` for the alpha release notes.
 
-Experimental post-V1 work lives under `contracts/experimental/`. See `docs/experimental/reserve-trace.md` for the first labeled observation and checkpoint experiment.
+Experimental post-V1 work lives under `contracts/experimental/`. See `docs/experimental/reserve-trace.md` for labeled observations and `docs/experimental/reserve-recoverable.md` for the application-defined recovery base contract.
 
 ## Deploy to Monad Testnet
 
 Set your environment variables in Bash:
 
 ```bash
-export MONAD_RPC_URL="https://..."
+export MONAD_RPC_URL="https://rpc.testnet.monad.xyz"
 export PRIVATE_KEY="0x..."
 ```
 
@@ -127,3 +130,17 @@ bash scripts/run-7702-drain-restore.sh
 ```
 
 The EIP-7702 delegated drain/restore experiment is intentionally documented as a live testnet workflow because local Monad Foundry validates delegated routing but may not reproduce the same reserve-dip semantics observed on testnet.
+
+## Security
+
+- Use disposable, testnet-only keys for deployment and EIP-7702 authorization experiments.
+- Never commit private keys, funded account credentials, or populated environment files.
+- Treat MIP-4 as a transaction-wide signal, not proof that `address(this)` caused the reserve violation.
+- A healthy checkpoint only describes the point where it runs; later execution can still dip.
+- `ReserveTrace` and `ReserveRecoverable` are experimental and are not part of the stable V1 API.
+
+If a key is ever placed in a shared file, terminal transcript, issue, or chat, stop using that account and move any remaining test funds to a fresh testnet-only account.
+
+## License
+
+ReserveGuard is available under the [MIT License](LICENSE).

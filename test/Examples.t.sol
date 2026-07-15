@@ -12,6 +12,9 @@ import {
 import {
     Testnet7702TracedDrainRestore
 } from "../examples/testnet/Testnet7702TracedDrainRestore.sol";
+import {
+    Testnet7702RecoverableAgentWallet
+} from "../examples/testnet/Testnet7702RecoverableAgentWallet.sol";
 import { TestnetDrainRestore } from "../examples/testnet/TestnetDrainRestore.sol";
 import { TestnetRefundSink } from "../examples/testnet/TestnetRefundSink.sol";
 import { TestnetReserveProbe } from "../examples/testnet/TestnetReserveProbe.sol";
@@ -186,6 +189,33 @@ contract ExamplesTest {
         _assertEq(Testnet7702TracedDrainRestore(authority).lastBeforeBalance(), 19 ether);
         _assertEq(Testnet7702TracedDrainRestore(authority).lastDuringBalance(), 9 ether);
         _assertEq(Testnet7702TracedDrainRestore(authority).lastAfterBalance(), 19 ether);
+    }
+
+    function test7702RecoverableAgentWalletSkipsRecoveryWhenHealthy() external {
+        _setDipped(false);
+
+        address payable authority = payable(VM.addr(AUTHORITY_PK));
+        address sponsor = address(0xBEEF);
+
+        TestnetRefundSink sink = new TestnetRefundSink();
+        Testnet7702RecoverableAgentWallet implementation = new Testnet7702RecoverableAgentWallet();
+
+        VM.deal(authority, 19 ether);
+        VM.deal(sponsor, 1 ether);
+        VM.signAndAttachDelegation(address(implementation), AUTHORITY_PK);
+
+        VM.prank(sponsor);
+        (bool beforeDip, bool duringDip, bool recoveryAttempted, bool afterDip) =
+            Testnet7702RecoverableAgentWallet(authority).runRecoverableBatch(sink, 1 ether);
+
+        _assertFalse(beforeDip);
+        _assertFalse(duringDip);
+        _assertFalse(recoveryAttempted);
+        _assertFalse(afterDip);
+        _assertFalse(Testnet7702RecoverableAgentWallet(authority).lastRecoveryAttempted());
+        _assertFalse(Testnet7702RecoverableAgentWallet(authority).lastRecoverySucceeded());
+        _assertEq(authority.balance, 18 ether);
+        _assertEq(address(sink).balance, 1 ether);
     }
 
     function _setDipped(bool value) internal {
